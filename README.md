@@ -16,6 +16,7 @@ IDS Hyyp integration for Home Assistant
     - [Installing](#installing)
 - [About](#about)
     - [Help](#help)
+    - [Requests](#requests)
 - [Changelog](#changelog)
 
 # Features
@@ -185,6 +186,12 @@ Old Steps in 1-4 Youtube video (HACS < 2.00 ): http://www.youtube.com/watch?v=FG
 - If you need help or found bugs, please make use of the github discussions or bug report features. I may assist if time permits.
 (https://github.com/hawky358/hass_ids_hyyp)
 
+
+## Requests
+- If you want to request a feature or if you want to add to the repo, please open an issue or discussion first before doing a pull request so we can discuss the plan beforehand.
+
+
+
 ## Disclaimer
 - I am not a programmer/developer/coder/etc. I created this fork since I want to continue using this integration. It was broken for me (2023.4), so I fixed it and thought I'd share it so other people can also continue using it.
 Support, updates, bugfixes, features, etc. will be limited, but I will help where possible and will share anything I develop.
@@ -198,7 +205,7 @@ Support, updates, bugfixes, features, etc. will be limited, but I will help wher
 
 ---
 # Changelog:
-**Version 1.9.0-b1**
+**Version 1.9.0**
 - Added Panic button
     - `button.[site]_panic_button`
 
