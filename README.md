@@ -11,15 +11,14 @@ IDS Hyyp integration for Home Assistant
 # TOC
 - [Features](#features)
 - [Examples](#examples)
-- [Installation](#installation)
-    - [Requirements](#requirements)
-    - [Installing](#installing)
 - [About](#about)
     - [Help](#help)
     - [Requests](#requests)
 - [Changelog](#changelog)
 
 # Features
+
+- Zones now shown as seperate binary sensors. PIR = Clear / Motion Detected. Contacts = Open / Closed. User will need to extract their specific IDS zone id's that provided by HYYP, using a logger in binary_sensor.py
 
 
 - Supports "Cell phone" type push notifications from IDS. These are the same as the notifications that you'd normally receive on your cellphone with the HYYP App.
@@ -150,22 +149,6 @@ Example of a simple "panel" which has multiple stay profiles
 - Requires Home Assistant version 2024.11 and newer.
 - Due to the integration connecting to IDS servers, the Home Assistant server requires an internet connection.
 - Get HACS here: (https://hacs.xyz/docs/use/download/download/)
-
-## Installing
-
-Steps in 1-4 Youtube video: **https://youtu.be/PcCEC4NRbYA**
-
-0. DELETE THE OLD VERSION! (If you still have the old Pre 2023.4 version by @RenierM26)
-
-1) Add the following custom repository to HACS: https://github.com/hawky358/hass_ids_hyyp
-2) Download the integration using HACS 
-3) Restart Home Assistant
-4) Add Hyyp integration via Settings > Devices and Services and configure via config flow. 
-
-HACS Method is recommended. If you know how to use SSH or another uploading method, you probably don't need a guide.
-
-
-Old Steps in 1-4 Youtube video (HACS < 2.00 ): http://www.youtube.com/watch?v=FGoE4XzUE38
 
 # About
 
