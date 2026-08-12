@@ -63,6 +63,56 @@ class HyypSensor(HyypSiteEntity, BinarySensorEntity):
         """Return the state of the binary sensor."""
         return bool(self.data[self._sensor_name])
 
+class HyypZoneStatusSensor(HyypPartitionEntity, BinarySensorEntity):
+    """Represent the open/closed (violated/normal) state of an IDS zone."""
+
+    _attr_device_class = BinarySensorDeviceClass.OPENING
+
+    def __init__(
+        self,
+        coordinator: HyypDataUpdateCoordinator,
+        site_id: int,
+        partition_id: int,
+        zone_id: str,
+    ) -> None:
+        """Initialize the zone status entity."""
+        super().__init__(coordinator, site_id, partition_id)
+
+        self._zone_id = zone_id
+        zone = self._zone_data
+
+        zone_name = zone.get("name") or f"Zone {zone_id}"
+
+        self._attr_name = zone_name.title()
+        self._attr_unique_id = (
+            f"{self._site_id}_{self._partition_id}_{self._zone_id}_status"
+        )
+
+    @property
+    def _zone_data(self) -> dict:
+        """Return data for this zone."""
+        return self.partition_data["zones"][self._zone_id]
+
+    @property
+    def is_on(self) -> bool:
+        """Return True when zone is open or violated."""
+        return bool(self._zone_data.get("openviolated", False))
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        """Return useful IDS zone metadata."""
+        zone = self._zone_data
+
+        return {
+            "zone_id": self._zone_id,
+            "zone_name": zone.get("name"),
+            "partition_id": self._partition_id,
+            "partition_name": self.partition_data.get("name"),
+            "bypassed": bool(zone.get("bypassed", False)),
+            "stay_bypassed": bool(zone.get("stay_bypassed", False)),
+            "tampered": bool(zone.get("tampered", False)),
+            "triggered": bool(zone.get("triggered", False)),
+        }
 
 class HyypZoneTriggerSensor(HyypPartitionEntity, BinarySensorEntity):
     """Representation of a IDS Hyyp sensor."""
