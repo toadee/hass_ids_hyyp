@@ -32,14 +32,14 @@ BINARY_SENSOR_TYPES: dict[str, BinarySensorEntityDescription] = {
 # The IDS API does not provide a reliable sensor hardware/type field.
 # These are per-panel mappings based on the installed physical hardware.
 ZONE_DEVICE_CLASSES: dict[str, BinarySensorDeviceClass | None] = {
-    "1": BinarySensorDeviceClass.DOOR,  # Front Door
-    "2": BinarySensorDeviceClass.DOOR,  # Back Slider
-    "3": BinarySensorDeviceClass.MOTION,  # Lounge PIR
-    "4": None,  # Garage: PIR + door contact on one IDS zone
-    "5": BinarySensorDeviceClass.MOTION,  # MBED Kitchen PIR
-    "6": BinarySensorDeviceClass.MOTION,  # Nursery PIR
-    "7": BinarySensorDeviceClass.MOTION,  # Office PIR
-    "8": None,  # "On Off": unknown
+    "4823427": BinarySensorDeviceClass.DOOR,    # Zone 1 - Front Door
+    "4823429": BinarySensorDeviceClass.DOOR,    # Zone 2 - Back Slider
+    "4823431": BinarySensorDeviceClass.MOTION,  # Zone 3 - Lounge PIR
+    "4823433": None,                            # Zone 4 - Garage: PIR + door contact
+    "4823435": BinarySensorDeviceClass.MOTION,  # Zone 5 - MBED Kitchen PIR
+    "4823437": BinarySensorDeviceClass.MOTION,  # Zone 6 - Nursery PIR
+    # Add Office once the log shows its API zone ID:
+    # "4823439": BinarySensorDeviceClass.MOTION,
 }
 
 PARALLEL_UPDATES = 1
