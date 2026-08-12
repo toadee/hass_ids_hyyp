@@ -1,4 +1,4 @@
-# IDS Hyyp (hawkMod)
+# IDS Hyyp (Toadee)
 IDS Hyyp integration for Home Assistant
 
 
