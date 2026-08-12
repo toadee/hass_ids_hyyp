@@ -34,8 +34,7 @@ ZONE_DEVICE_CLASSES: dict[str, BinarySensorDeviceClass | None] = {
     "4823433": None,                            # Zone 4 - Garage: PIR + door contact
     "4823435": BinarySensorDeviceClass.MOTION,  # Zone 5 - MBED Kitchen PIR
     "4823437": BinarySensorDeviceClass.MOTION,  # Zone 6 - Nursery PIR
-    # Add Office once the log shows its API zone ID:
-    # "4823439": BinarySensorDeviceClass.MOTION,
+    "4823439": BinarySensorDeviceClass.MOTION,  # Zone 6 - Office PIR
 }
 
 PARALLEL_UPDATES = 1
