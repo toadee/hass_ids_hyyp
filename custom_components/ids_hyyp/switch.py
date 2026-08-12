@@ -64,8 +64,12 @@ class HyypSwitch(HyypPartitionEntity, SwitchEntity):
         super().__init__(coordinator, site_id, partition_id)
         self._bypass_code = bypass_code
         self._zone_id = zone_id
-        self._attr_name = f"{self.partition_data['zones'][zone_id]['name'].title()}"
-        self._attr_unique_id = f"{self._site_id}_{partition_id}_{zone_id}"
+        zone_name = self.partition_data["zones"][zone_id]["name"].title()
+        
+        self._attr_name = f"{zone_name} Bypass"
+        self._attr_unique_id = (
+            f"{self._site_id}_{partition_id}_{zone_id}_bypass"
+        )
 
     @property
     def available(self) -> bool:
@@ -75,7 +79,9 @@ class HyypSwitch(HyypPartitionEntity, SwitchEntity):
     @property
     def is_on(self) -> bool:
         """Return the state of the switch."""
-        return not self.partition_data["zones"][self._zone_id]["bypassed"]
+        return bool(
+            self.partition_data["zones"][self._zone_id].get("bypassed", False)
+        )
     
     @property
     def extra_state_attributes(self):
