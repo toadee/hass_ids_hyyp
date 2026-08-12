@@ -27,14 +27,13 @@ BINARY_SENSOR_TYPES: dict[str, BinarySensorEntityDescription] = {
 
 # The IDS API does not provide a reliable sensor hardware/type field.
 # These are per-panel mappings based on the installed physical hardware.
-ZONE_DEVICE_CLASSES: dict[str, BinarySensorDeviceClass | None] = {
-    "4823427": BinarySensorDeviceClass.DOOR,    # Zone 1 - Front Door
-    "4823429": BinarySensorDeviceClass.DOOR,    # Zone 2 - Back Slider
-    "4823431": BinarySensorDeviceClass.MOTION,  # Zone 3 - Lounge PIR
-    "4823433": None,                            # Zone 4 - Garage: PIR + door contact
-    "4823435": BinarySensorDeviceClass.MOTION,  # Zone 5 - MBED Kitchen PIR
-    "4823437": BinarySensorDeviceClass.MOTION,  # Zone 6 - Nursery PIR
-    "4823439": BinarySensorDeviceClass.MOTION,  # Zone 6 - Office PIR
+ZONE_DEVICE_CLASSES_BY_NAME: dict[str, BinarySensorDeviceClass | None] = {
+    "FRONT DOOR": BinarySensorDeviceClass.DOOR,
+    "BACK SLIDER": BinarySensorDeviceClass.DOOR,
+    "LOUNGE": BinarySensorDeviceClass.MOTION,
+    "MBED KITCHEN": BinarySensorDeviceClass.MOTION,
+    "NURSARY": BinarySensorDeviceClass.MOTION,
+    "OFFICE": BinarySensorDeviceClass.MOTION,
 }
 
 PARALLEL_UPDATES = 1
@@ -120,9 +119,10 @@ class HyypZoneStatusSensor(HyypPartitionEntity, BinarySensorEntity):
             f"{self._site_id}_{self._partition_id}_{self._zone_id}_status"
         )
 
-        device_class = ZONE_DEVICE_CLASSES.get(str(zone_id))
-        if device_class is not None:
-            self._attr_device_class = device_class
+        if zone_name.strip().upper() in ZONE_DEVICE_CLASSES_BY_NAME:
+            device_class = ZONE_DEVICE_CLASSES_BY_NAME[zone_name.strip().upper()]
+            if device_class is not None:
+                self._attr_device_class = device_class
 
     @property
     def _zone_data(self) -> dict[str, Any]:
