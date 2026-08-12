@@ -1,7 +1,10 @@
-"""Support for Hyyp binary sensors."""
+"""Support for IDS Hyyp binary sensors."""
 from __future__ import annotations
 
+from typing import Any
+
 from homeassistant.components.binary_sensor import (
+    BinarySensorDeviceClass,
     BinarySensorEntity,
     BinarySensorEntityDescription,
 )
@@ -11,37 +14,67 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DATA_COORDINATOR, DOMAIN
 from .coordinator import HyypDataUpdateCoordinator
-from .entity import HyypSiteEntity, HyypPartitionEntity
-
-
+from .entity import HyypPartitionEntity, HyypSiteEntity
 
 BINARY_SENSOR_TYPES: dict[str, BinarySensorEntityDescription] = {
     "isMaster": BinarySensorEntityDescription(key="isMaster"),
     "hasPin": BinarySensorEntityDescription(key="hasPin"),
-    "isOnline": BinarySensorEntityDescription(key="isOnline"),
+    "isOnline": BinarySensorEntityDescription(
+        key="isOnline",
+        device_class=BinarySensorDeviceClass.CONNECTIVITY,
+    ),
+}
+
+# The IDS API does not provide a reliable sensor hardware/type field.
+# These are per-panel mappings based on the installed physical hardware.
+ZONE_DEVICE_CLASSES: dict[str, BinarySensorDeviceClass | None] = {
+    "1": BinarySensorDeviceClass.DOOR,  # Front Door
+    "2": BinarySensorDeviceClass.DOOR,  # Back Slider
+    "3": BinarySensorDeviceClass.MOTION,  # Lounge PIR
+    "4": None,  # Garage: PIR + door contact on one IDS zone
+    "5": BinarySensorDeviceClass.MOTION,  # MBED Kitchen PIR
+    "6": BinarySensorDeviceClass.MOTION,  # Nursery PIR
+    "7": BinarySensorDeviceClass.MOTION,  # Office PIR
+    "8": None,  # "On Off": unknown
 }
 
 PARALLEL_UPDATES = 1
+
+
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up IDS Hyyp binary sensors based on a config entry."""
     coordinator: HyypDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id][
         DATA_COORDINATOR
     ]
 
+    # Existing site-level binary sensors.
     async_add_entities(
         [
             HyypSensor(coordinator, site_id, sensor)
-            for site_id in coordinator.data
-            for sensor, value in coordinator.data[site_id].items()
+            for site_id, site_data in coordinator.data.items()
+            for sensor, value in site_data.items()
             if sensor in BINARY_SENSOR_TYPES
-            if value is not None        
+            if value is not None
         ]
     )
-   
+
+    # One current-state binary sensor for every IDS zone.
+    async_add_entities(
+        [
+            HyypZoneStatusSensor(coordinator, site_id, partition_id, zone_id)
+            for site_id, site_data in coordinator.data.items()
+            for partition_id, partition_data in site_data.get("partitions", {}).items()
+            for zone_id in partition_data.get("zones", {})
+        ]
+    )
+
+
 class HyypSensor(HyypSiteEntity, BinarySensorEntity):
-    """Representation of a IDS Hyyp sensor."""
+    """Representation of an IDS Hyyp site binary sensor."""
 
     coordinator: HyypDataUpdateCoordinator
 
@@ -63,59 +96,9 @@ class HyypSensor(HyypSiteEntity, BinarySensorEntity):
         """Return the state of the binary sensor."""
         return bool(self.data[self._sensor_name])
 
+
 class HyypZoneStatusSensor(HyypPartitionEntity, BinarySensorEntity):
-    """Represent the open/closed (violated/normal) state of an IDS zone."""
-
-    _attr_device_class = BinarySensorDeviceClass.OPENING
-
-    def __init__(
-        self,
-        coordinator: HyypDataUpdateCoordinator,
-        site_id: int,
-        partition_id: int,
-        zone_id: str,
-    ) -> None:
-        """Initialize the zone status entity."""
-        super().__init__(coordinator, site_id, partition_id)
-
-        self._zone_id = zone_id
-        zone = self._zone_data
-
-        zone_name = zone.get("name") or f"Zone {zone_id}"
-
-        self._attr_name = zone_name.title()
-        self._attr_unique_id = (
-            f"{self._site_id}_{self._partition_id}_{self._zone_id}_status"
-        )
-
-    @property
-    def _zone_data(self) -> dict:
-        """Return data for this zone."""
-        return self.partition_data["zones"][self._zone_id]
-
-    @property
-    def is_on(self) -> bool:
-        """Return True when zone is open or violated."""
-        return bool(self._zone_data.get("openviolated", False))
-
-    @property
-    def extra_state_attributes(self) -> dict:
-        """Return useful IDS zone metadata."""
-        zone = self._zone_data
-
-        return {
-            "zone_id": self._zone_id,
-            "zone_name": zone.get("name"),
-            "partition_id": self._partition_id,
-            "partition_name": self.partition_data.get("name"),
-            "bypassed": bool(zone.get("bypassed", False)),
-            "stay_bypassed": bool(zone.get("stay_bypassed", False)),
-            "tampered": bool(zone.get("tampered", False)),
-            "triggered": bool(zone.get("triggered", False)),
-        }
-
-class HyypZoneTriggerSensor(HyypPartitionEntity, BinarySensorEntity):
-    """Representation of a IDS Hyyp sensor."""
+    """Represent the current normal/violated state of an IDS zone."""
 
     coordinator: HyypDataUpdateCoordinator
 
@@ -126,15 +109,43 @@ class HyypZoneTriggerSensor(HyypPartitionEntity, BinarySensorEntity):
         partition_id: int,
         zone_id: str,
     ) -> None:
-        """Initialize the sensor."""
+        """Initialize the zone status sensor."""
         super().__init__(coordinator, site_id, partition_id)
-        self._sensor_name = f"{self.partition_data['zones'][zone_id]['name'].title()} trigger"
+
         self._zone_id = zone_id
-        self._attr_name = f"{self.partition_data['zones'][zone_id]['name'].title()} trigger"
-        self._attr_unique_id = f"{self._site_id}_{partition_id}_{zone_id}_trigger"
-      
-   
+        zone = self._zone_data
+        zone_name = zone.get("name") or f"Zone {zone_id}"
+
+        self._attr_name = zone_name.title()
+        self._attr_unique_id = (
+            f"{self._site_id}_{self._partition_id}_{self._zone_id}_status"
+        )
+
+        device_class = ZONE_DEVICE_CLASSES.get(str(zone_id))
+        if device_class is not None:
+            self._attr_device_class = device_class
+
+    @property
+    def _zone_data(self) -> dict[str, Any]:
+        """Return the latest coordinator data for this zone."""
+        return self.partition_data["zones"][self._zone_id]
+
     @property
     def is_on(self) -> bool:
-        """Return the state of the binary sensor."""
-        return bool(self.partition_data["zones"][self._zone_id]["triggered"])
+        """Return True when IDS reports this zone as violated."""
+        return bool(self._zone_data.get("openviolated", False))
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return IDS zone data that is useful for dashboards and automations."""
+        zone = self._zone_data
+
+        return {
+            "zone_id": self._zone_id,
+            "partition_id": self._partition_id,
+            "partition_name": self.partition_data.get("name"),
+            "bypassed": bool(zone.get("bypassed", False)),
+            "stay_bypassed": bool(zone.get("stay_bypassed", False)),
+            "tampered": bool(zone.get("tampered", False)),
+            "triggered": bool(zone.get("triggered", False)),
+        }
