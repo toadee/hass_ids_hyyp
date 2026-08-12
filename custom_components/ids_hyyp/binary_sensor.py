@@ -16,10 +16,6 @@ from .const import DATA_COORDINATOR, DOMAIN
 from .coordinator import HyypDataUpdateCoordinator
 from .entity import HyypPartitionEntity, HyypSiteEntity
 
-import logging
-
-_LOGGER = logging.getLogger(__name__)
-
 BINARY_SENSOR_TYPES: dict[str, BinarySensorEntityDescription] = {
     "isMaster": BinarySensorEntityDescription(key="isMaster"),
     "hasPin": BinarySensorEntityDescription(key="hasPin"),
@@ -123,12 +119,6 @@ class HyypZoneStatusSensor(HyypPartitionEntity, BinarySensorEntity):
         self._attr_name = zone_name.title()
         self._attr_unique_id = (
             f"{self._site_id}_{self._partition_id}_{self._zone_id}_status"
-        )
-
-        _LOGGER.warning(
-            "IDS zone discovered: zone_id=%r, name=%r",
-            zone_id,
-            zone_name,
         )
 
         device_class = ZONE_DEVICE_CLASSES.get(str(zone_id))
